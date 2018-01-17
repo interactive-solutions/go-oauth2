@@ -10,17 +10,16 @@ import (
 	"strings"
 
 	"github.com/interactive-solutions/go-oauth2"
-	"github.com/interactive-solutions/go-oauth2/model"
+	"github.com/interactive-solutions/go-oauth2/token"
 )
 
 func WriteTokenResponse(
 	w http.ResponseWriter,
-	accessToken *model.OauthAccessToken,
-	refreshToken *model.OauthRefreshToken,
+	accessToken *token.OauthAccessToken,
+	refreshToken *token.OauthRefreshToken,
 	useRefreshTokenScopes bool,
 ) {
 	w.Header().Set("Content-Type", "application/json")
-	w.WriteHeader(http.StatusOK)
 
 	scopes := accessToken.Scopes
 	if useRefreshTokenScopes {
@@ -51,41 +50,34 @@ func WriteTokenResponse(
 
 	body, err := json.Marshal(&payload)
 	if err != nil {
-		WriteErrorResponse(w, oauth2.ServerErrorErr, "Failed to create token response")
+		WriteErrorResponse(w, oauth2.NewError(oauth2.ServerErrorErr, "Failed to create token response"))
 		return
 	}
 
+	w.WriteHeader(http.StatusOK)
 	w.Write(body)
 }
 
-func WriteErrorResponse(w http.ResponseWriter, error oauth2.OauthErr, description string) {
+func WriteErrorResponse(w http.ResponseWriter, error *oauth2.OauthError) {
 	w.Header().Set("Content-Type", "application/json")
+
+	body, err := json.Marshal(error)
+	if err != nil {
+		w.WriteHeader(http.StatusInternalServerError)
+		w.Write([]byte(fmt.Sprintf("Failed to create response: %s", err)))
+		return
+	}
 
 	// From specification
 	// "The authorization server responds with an HTTP 400 (Bad Request)
 	// status code (unless specified otherwise)"
-	switch error {
+	switch error.Error {
 	case oauth2.ServerErrorErr:
 		w.WriteHeader(http.StatusInternalServerError)
 	case oauth2.TemporarilyUnavailableErr:
 		w.WriteHeader(http.StatusServiceUnavailable)
 	default:
 		w.WriteHeader(http.StatusBadRequest)
-	}
-
-	payload := struct {
-		Error            oauth2.OauthErr `json:"error"`
-		ErrorDescription string          `json:"error_description"`
-	}{
-		Error:            error,
-		ErrorDescription: description,
-	}
-
-	body, err := json.Marshal(&payload)
-	if err != nil {
-		w.WriteHeader(http.StatusInternalServerError)
-		w.Write([]byte(fmt.Sprintf("Failed to create response: %s", err)))
-		return
 	}
 
 	w.Write(body)

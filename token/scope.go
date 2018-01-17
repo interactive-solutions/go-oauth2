@@ -1,4 +1,4 @@
-package model
+package token
 
 type OauthScope struct {
 	Id          int
