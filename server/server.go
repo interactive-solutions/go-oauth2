@@ -192,7 +192,7 @@ func (server *OauthServer) createTokens(
 	for {
 		accessToken, err = oauth2.NewOauthAccessToken(clientId, tokenOwnerId, server.Config.AccessTokenDuration, scopes)
 		if err != nil {
-			return nil, nil, oauth2.NewError(oauth2.ServerErrorErr, "Error creating access token")
+			return nil, nil, oauth2.NewError(oauth2.ServerErrorErr, err.Error())
 		}
 
 		if t, _ := server.tokenRepository.GetAccessToken(accessToken.Token); t == nil {
@@ -201,7 +201,7 @@ func (server *OauthServer) createTokens(
 	}
 
 	if err = server.tokenRepository.CreateAccessToken(accessToken); err != nil {
-		return nil, nil, oauth2.NewError(oauth2.ServerErrorErr, "Error persisting access token")
+		return nil, nil, oauth2.NewError(oauth2.ServerErrorErr, err.Error())
 	}
 
 	// Are we generating tokens using refresh grant ?
@@ -213,7 +213,7 @@ func (server *OauthServer) createTokens(
 		for {
 			refreshToken, err := oauth2.NewOauthRefreshToken(clientId, tokenOwnerId, server.Config.RefreshTokenDuration, scopes)
 			if err != nil {
-				return nil, nil, oauth2.NewError(oauth2.ServerErrorErr, "Error creating refresh token")
+				return nil, nil, oauth2.NewError(oauth2.ServerErrorErr, err.Error())
 			}
 
 			if t, _ := server.tokenRepository.GetRefreshToken(refreshToken.Token); t == nil {
@@ -222,7 +222,7 @@ func (server *OauthServer) createTokens(
 		}
 
 		if err = server.tokenRepository.CreateRefreshToken(refreshToken); err != nil {
-			return nil, nil, oauth2.NewError(oauth2.ServerErrorErr, "Error persisting refresh token")
+			return nil, nil, oauth2.NewError(oauth2.ServerErrorErr, err.Error())
 		}
 
 		return accessToken, refreshToken, nil
@@ -238,7 +238,7 @@ func (server *OauthServer) createTokens(
 		// Refresh grant and rotating refresh tokens
 		newRefreshToken, err = oauth2.NewOauthRefreshToken(clientId, tokenOwnerId, server.Config.RefreshTokenDuration, scopes)
 		if err != nil {
-			return nil, nil, oauth2.NewError(oauth2.ServerErrorErr, "Error creating refresh token")
+			return nil, nil, oauth2.NewError(oauth2.ServerErrorErr, err.Error())
 		}
 
 		if t, _ := server.tokenRepository.GetRefreshToken(newRefreshToken.Token); t == nil {
@@ -247,12 +247,12 @@ func (server *OauthServer) createTokens(
 	}
 
 	if err = server.tokenRepository.CreateRefreshToken(newRefreshToken); err != nil {
-		return nil, nil, oauth2.NewError(oauth2.ServerErrorErr, "Error persisting refresh token")
+		return nil, nil, oauth2.NewError(oauth2.ServerErrorErr, err.Error())
 	}
 
 	if server.Config.RevokeRotatedRefreshTokens {
 		if err = server.tokenRepository.DeleteRefreshToken(refreshToken.Token); err != nil {
-			return nil, nil, oauth2.NewError(oauth2.ServerErrorErr, "Error cleaning up old refresh token")
+			return nil, nil, oauth2.NewError(oauth2.ServerErrorErr, err.Error())
 		}
 	}
 
