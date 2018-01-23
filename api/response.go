@@ -68,7 +68,7 @@ func WriteErrorResponse(w http.ResponseWriter, err error) {
 		}
 	}
 
-	body, err := json.Marshal(oauthError.Description)
+	body, err := json.Marshal(oauthError)
 	if err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
 		w.Write([]byte(fmt.Sprintf("Failed to create response: %s", err)))
