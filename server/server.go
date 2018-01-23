@@ -97,7 +97,7 @@ func (server *OauthServer) HandleAuthorizationRequest(w http.ResponseWriter, r *
 	responseType := r.FormValue("response_type")
 
 	if responseType == "" {
-		api.WriteErrorResponse(w, oauth2.NewError(oauth2.InvalidRequestErr, "No grant response type was found in request"))
+		server.writeError(w, oauth2.NewError(oauth2.InvalidRequestErr, "No grant response type was found in request"))
 		return
 	}
 }
@@ -164,7 +164,7 @@ func (server *OauthServer) HandleTokenRequest(w http.ResponseWriter, r *http.Req
 }
 
 func (server *OauthServer) writeError(w http.ResponseWriter, err error) {
-	if server.Config.ErrorMap != nil {
+	if server.Config.ErrorMap == nil {
 		api.WriteErrorResponse(w, err)
 		return
 	}
@@ -178,6 +178,7 @@ func (server *OauthServer) writeError(w http.ResponseWriter, err error) {
 	api.WriteErrorResponse(w, oauthError)
 }
 
+// todo: cleanup
 func (server *OauthServer) createTokens(
 	tokenOwnerId oauth2.OauthTokenOwnerId,
 	clientId string,
