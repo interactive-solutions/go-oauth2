@@ -16,20 +16,22 @@ import (
 )
 
 type OauthServer struct {
-	Config ServerConfig
+	Config          ServerConfig
+	tokenRepository oauth2.TokenRepository
 }
 
-func NewDefaultOauthServer() *OauthServer {
-	return NewOauthServer(ServerDefaultConfig)
+func NewDefaultOauthServer(tokenRepository oauth2.TokenRepository) *OauthServer {
+	return NewOauthServer(ServerDefaultConfig, tokenRepository)
 }
 
-func NewOauthServer(config ServerConfig) *OauthServer {
-	if config.TokenRepository == nil {
-		panic("No token repository given in oauth2 server config")
+func NewOauthServer(config ServerConfig, tokenRepository oauth2.TokenRepository) *OauthServer {
+	if tokenRepository == nil {
+		panic("No token repository given to oauth2 server")
 	}
 
 	return &OauthServer{
-		Config: config,
+		Config:          config,
+		tokenRepository: tokenRepository,
 	}
 }
 
@@ -41,8 +43,8 @@ func (server *OauthServer) PeriodicallyDeleteExpiredTokens(ctx context.Context, 
 		timer.Stop()
 		return
 	case <-timer.C:
-		server.Config.TokenRepository.DeleteExpiredAccessTokens()
-		server.Config.TokenRepository.DeleteExpiredRefreshTokens()
+		server.tokenRepository.DeleteExpiredAccessTokens()
+		server.tokenRepository.DeleteExpiredRefreshTokens()
 
 		timer.Reset(interval)
 	}
@@ -135,7 +137,7 @@ func (server *OauthServer) HandleTokenRequest(w http.ResponseWriter, r *http.Req
 			return
 		}
 
-		refreshToken, err := server.Config.TokenRepository.GetRefreshToken(r.FormValue("refresh_token"))
+		refreshToken, err := server.tokenRepository.GetRefreshToken(r.FormValue("refresh_token"))
 		if err != nil {
 			server.writeError(w, err)
 			return
@@ -192,12 +194,12 @@ func (server *OauthServer) createTokens(
 			return nil, nil, oauth2.NewError(oauth2.ServerErrorErr, "Error creating access token")
 		}
 
-		if t, _ := server.Config.TokenRepository.GetAccessToken(accessToken.Token); t == nil {
+		if t, _ := server.tokenRepository.GetAccessToken(accessToken.Token); t == nil {
 			break
 		}
 	}
 
-	if err = server.Config.TokenRepository.CreateAccessToken(accessToken); err != nil {
+	if err = server.tokenRepository.CreateAccessToken(accessToken); err != nil {
 		return nil, nil, oauth2.NewError(oauth2.ServerErrorErr, "Error persisting access token")
 	}
 
@@ -213,12 +215,12 @@ func (server *OauthServer) createTokens(
 				return nil, nil, oauth2.NewError(oauth2.ServerErrorErr, "Error creating refresh token")
 			}
 
-			if t, _ := server.Config.TokenRepository.GetRefreshToken(refreshToken.Token); t == nil {
+			if t, _ := server.tokenRepository.GetRefreshToken(refreshToken.Token); t == nil {
 				break
 			}
 		}
 
-		if err = server.Config.TokenRepository.CreateRefreshToken(refreshToken); err != nil {
+		if err = server.tokenRepository.CreateRefreshToken(refreshToken); err != nil {
 			return nil, nil, oauth2.NewError(oauth2.ServerErrorErr, "Error persisting refresh token")
 		}
 
@@ -238,17 +240,17 @@ func (server *OauthServer) createTokens(
 			return nil, nil, oauth2.NewError(oauth2.ServerErrorErr, "Error creating refresh token")
 		}
 
-		if t, _ := server.Config.TokenRepository.GetRefreshToken(newRefreshToken.Token); t == nil {
+		if t, _ := server.tokenRepository.GetRefreshToken(newRefreshToken.Token); t == nil {
 			break
 		}
 	}
 
-	if err = server.Config.TokenRepository.CreateRefreshToken(newRefreshToken); err != nil {
+	if err = server.tokenRepository.CreateRefreshToken(newRefreshToken); err != nil {
 		return nil, nil, oauth2.NewError(oauth2.ServerErrorErr, "Error persisting refresh token")
 	}
 
 	if server.Config.RevokeRotatedRefreshTokens {
-		if err = server.Config.TokenRepository.DeleteRefreshToken(refreshToken.Token); err != nil {
+		if err = server.tokenRepository.DeleteRefreshToken(refreshToken.Token); err != nil {
 			return nil, nil, oauth2.NewError(oauth2.ServerErrorErr, "Error cleaning up old refresh token")
 		}
 	}
