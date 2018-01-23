@@ -65,7 +65,7 @@ func main() {
     }
     
     // Map a custom error to an error specified in the documentation
-    s.Config.ErrorMap[userIsBlockedErr] = &oauth2.OauthError {
+    s.Config.ErrorMap[userIsBlockedErr] = oauth2.OauthError {
         Err: oauth2.AccessDenied,
         Description: "Invalid credentials"
     }

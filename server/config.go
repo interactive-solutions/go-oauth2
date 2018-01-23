@@ -18,7 +18,7 @@ var (
 			oauth2.GrantTypePassword:     grant.NewPasswordGrant(nil),
 			oauth2.GrantTypeRefreshToken: grant.NewRefreshTokenGrant(nil),
 		},
-		ErrorMap: map[error]*oauth2.OauthError{
+		ErrorMap: map[error]oauth2.OauthError{
 			oauth2.RefreshTokenNotFoundErr: {
 				Err:         oauth2.InvalidGrantErr,
 				Description: "Refresh has expired or been deleted",
@@ -40,7 +40,7 @@ type ServerConfig struct {
 	ClientAuthorizedHandler func(clientId, clientSecret string) (bool, error)
 
 	// Error map
-	ErrorMap map[error]*oauth2.OauthError
+	ErrorMap map[error]oauth2.OauthError
 
 	// Should a new refresh token be generated when refresh_token grant is used
 	RotateRefreshTokens bool

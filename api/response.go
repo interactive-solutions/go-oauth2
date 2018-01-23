@@ -60,11 +60,12 @@ func WriteTokenResponse(
 func WriteErrorResponse(w http.ResponseWriter, err error) {
 	w.Header().Set("Content-Type", "application/json")
 
-	oauthError, ok := err.(*oauth2.OauthError)
+	oauthError, ok := err.(oauth2.OauthError)
 	if !ok {
-		w.WriteHeader(http.StatusInternalServerError)
-		w.Write([]byte(fmt.Sprintf(err.Error())))
-		return
+		oauthError = oauth2.OauthError{
+			Err:         oauth2.ServerErrorErr,
+			Description: err.Error(),
+		}
 	}
 
 	body, err := json.Marshal(oauthError.Description)
