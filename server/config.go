@@ -14,6 +14,7 @@ var (
 		AuthorizationCodeDuration: time.Minute * 2,
 		AccessTokenDuration:       time.Hour,
 		RefreshTokenDuration:      time.Hour * 24,
+		GenerateRefreshToken:      true,
 		Grants: map[oauth2.GrantType]oauth2.OauthGrant{
 			oauth2.GrantTypePassword:     grant.NewPasswordGrant(nil),
 			oauth2.GrantTypeRefreshToken: grant.NewRefreshTokenGrant(nil),
