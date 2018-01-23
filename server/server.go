@@ -137,7 +137,7 @@ func (server *OauthServer) HandleTokenRequest(w http.ResponseWriter, r *http.Req
 			return
 		}
 
-		refreshToken, err := server.tokenRepository.GetRefreshToken(r.FormValue("refresh_token"))
+		refreshToken, err = server.tokenRepository.GetRefreshToken(r.FormValue("refresh_token"))
 		if err != nil {
 			server.writeError(w, err)
 			return
