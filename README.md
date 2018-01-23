@@ -22,9 +22,7 @@ import (
     "github.com/go-pg/pg"
 )
  
-func main() {
-    s := server.NewDefaultOauthServer()
-    
+func main() {    
     // If you want to use the built in token repository, connect to postgres
     // using go-pg
     database := pg.Connect(&pg.Options{
@@ -39,6 +37,8 @@ func main() {
     if err != nil {
         panic(err)
     }
+    
+    tokenRepository := token.NewTokenRepository(database)
     
     userIsBlockedErr := errors.New("User is blocked")
     
@@ -56,7 +56,9 @@ func main() {
         return "12345", nil
     }
     
-    tokenRepository := token.NewTokenRepository(database)
+    // Server will panic if we don't give it a token repository
+    s := server.NewDefaultOauthServer(tokenRepository)
+    
     s.Config.Grants = map[oauth2.GrantType]oauth2.OauthGrant{
         oauth2.GrantTypePassword:     grant.NewPasswordGrant(passwordAuthorizationHandler),
         oauth2.GrantTypeRefreshToken: grant.NewRefreshTokenGrant(tokenRepository),
