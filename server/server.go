@@ -211,7 +211,7 @@ func (server *OauthServer) createTokens(
 		}
 
 		for {
-			refreshToken, err := oauth2.NewOauthRefreshToken(clientId, tokenOwnerId, server.Config.RefreshTokenDuration, scopes)
+			refreshToken, err = oauth2.NewOauthRefreshToken(clientId, tokenOwnerId, server.Config.RefreshTokenDuration, scopes)
 			if err != nil {
 				return nil, nil, oauth2.NewError(oauth2.ServerErrorErr, err.Error())
 			}
