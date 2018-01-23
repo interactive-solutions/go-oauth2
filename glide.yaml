@@ -2,3 +2,4 @@ package: github.com/interactive-solutions/go-oauth2
 import:
 - package: github.com/pkg/errors
 - package: github.com/satori/go.uuid
+- package: github.com/go-pg/pg

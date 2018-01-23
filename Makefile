@@ -1,7 +1,7 @@
 test: mocks
 	./test.sh
 
-mocks: grant_mocks service_mocks model_mocks
+mocks: grant_mocks token_mocks
 
 grant_mocks:
 	@mockery                \
@@ -10,18 +10,9 @@ grant_mocks:
         -dir=grant          \
         -output=mocks       \
 
-service_mocks:
+token_mocks:
 	@mockery                \
         -case=underscore    \
         -all                \
-        -dir=service
+        -dir=token
         -output=mocks       \
-
-model_mocks:
-	@mockery                \
-        -case=underscore    \
-        -all                \
-        -dir=model
-        -output=mocks       \
-
-

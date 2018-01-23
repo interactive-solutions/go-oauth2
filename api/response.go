@@ -5,18 +5,17 @@ import (
 	"fmt"
 	"net/http"
 
-	"time"
-
 	"strings"
 
+	"math"
+
 	"github.com/interactive-solutions/go-oauth2"
-	"github.com/interactive-solutions/go-oauth2/token"
 )
 
 func WriteTokenResponse(
 	w http.ResponseWriter,
-	accessToken *token.OauthAccessToken,
-	refreshToken *token.OauthRefreshToken,
+	accessToken *oauth2.OauthAccessToken,
+	refreshToken *oauth2.OauthRefreshToken,
 	useRefreshTokenScopes bool,
 ) {
 	w.Header().Set("Content-Type", "application/json")
@@ -30,18 +29,18 @@ func WriteTokenResponse(
 		AccessToken  string           `json:"access_token"`
 		RefreshToken string           `json:"refresh_token,omitempty"`
 		TokenType    oauth2.TokenType `json:"token_type"`
-		ExpiresIn    time.Duration    `json:"expires_in"`
+		ExpiresIn    float64          `json:"expires_in"`
 		Scopes       string           `json:"scope"`
 		OwnerId      interface{}      `json:"owner_id,omitempty"`
 	}{
 		AccessToken: accessToken.Token,
 		TokenType:   oauth2.TokenTypeBearer,
-		ExpiresIn:   time.Until(accessToken.ExpiresAt),
+		ExpiresIn:   math.Floor(accessToken.GetExpiresIn()),
 		Scopes:      strings.Join(scopes, " "),
 	}
 
-	if accessToken.Owner != nil {
-		payload.OwnerId = accessToken.Owner.GetId()
+	if accessToken.OwnerId != "" {
+		payload.OwnerId = accessToken.OwnerId
 	}
 
 	if refreshToken != nil {
@@ -58,10 +57,17 @@ func WriteTokenResponse(
 	w.Write(body)
 }
 
-func WriteErrorResponse(w http.ResponseWriter, error *oauth2.OauthError) {
+func WriteErrorResponse(w http.ResponseWriter, err error) {
 	w.Header().Set("Content-Type", "application/json")
 
-	body, err := json.Marshal(error)
+	oauthError, ok := err.(*oauth2.OauthError)
+	if !ok {
+		w.WriteHeader(http.StatusInternalServerError)
+		w.Write([]byte(fmt.Sprintf(err.Error())))
+		return
+	}
+
+	body, err := json.Marshal(oauthError.Description)
 	if err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
 		w.Write([]byte(fmt.Sprintf("Failed to create response: %s", err)))
@@ -71,7 +77,7 @@ func WriteErrorResponse(w http.ResponseWriter, error *oauth2.OauthError) {
 	// From specification
 	// "The authorization server responds with an HTTP 400 (Bad Request)
 	// status code (unless specified otherwise)"
-	switch error.Error {
+	switch oauthError.Err {
 	case oauth2.ServerErrorErr:
 		w.WriteHeader(http.StatusInternalServerError)
 	case oauth2.TemporarilyUnavailableErr:

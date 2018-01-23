@@ -1,13 +1,19 @@
 package oauth2
 
+import "github.com/pkg/errors"
+
 type OauthError struct {
-	Error       OauthErrorType `json:"error"`
+	Err         OauthErrorType `json:"error"`
 	Description string         `json:"error_description"`
 }
 
-func NewError(error OauthErrorType, description string) *OauthError {
-	return &OauthError{
-		Error:       error,
+func (e OauthError) Error() string {
+	return e.Description
+}
+
+func NewError(error OauthErrorType, description string) error {
+	return OauthError{
+		Err:         error,
 		Description: description,
 	}
 }
@@ -26,4 +32,9 @@ const (
 	UnsupportedTokenTypeErr                   = "unsupported_token_type"
 	ServerErrorErr                            = "server_error"
 	TemporarilyUnavailableErr                 = "temporarily_unavailable"
+)
+
+var (
+	AccessTokenNotFoundErr  = errors.New("Access token not found")
+	RefreshTokenNotFoundErr = errors.New("Refresh token not found")
 )

@@ -2,40 +2,42 @@ package oauth2
 
 import (
 	"time"
-
-	"github.com/interactive-solutions/go-oauth2/token"
 )
 
-type OauthTokenOwner interface {
-	GetId() interface{}
-}
+type TokenType string
+
+const (
+	TokenTypeBearer TokenType = "Bearer"
+)
+
+type OauthTokenOwnerId string
 
 type OauthToken struct {
-	Token     string
-	Client    *OauthClient
-	Owner     OauthTokenOwner
+	Token     string `sql:",pk"`
 	ExpiresAt time.Time
 	Scopes    []string
+	ClientId  string
+	OwnerId   OauthTokenOwnerId
 }
 
 // Creates an abstract oauth token, SHOULD ONLY be called when creating another token
-func NewOauthToken(client *OauthClient, owner OauthTokenOwner, duration time.Duration, scopes []string) (*OauthToken, error) {
-	token, err := GenerateRandomString(20)
+func newOauthToken(clientId string, ownerId OauthTokenOwnerId, duration time.Duration, scopes []string) (*OauthToken, error) {
+	oauthToken, err := GenerateRandomString(20)
 	if err != nil {
 		return nil, err
 	}
 
 	return &OauthToken{
-		Token:     token,
-		Client:    client,
-		Owner:     owner,
+		Token:     oauthToken,
+		ClientId:  clientId,
+		OwnerId:   ownerId,
 		ExpiresAt: time.Now().Add(duration),
 		Scopes:    scopes,
 	}, nil
 }
 
-func (token *OauthToken) GetExpiresIn() time.Duration {
-	return time.Until(token.ExpiresAt)
+func (token *OauthToken) GetExpiresIn() float64 {
+	return time.Until(token.ExpiresAt).Seconds()
 }
 
 func (token *OauthToken) IsExpired() bool {
@@ -73,18 +75,81 @@ func (token *OauthToken) IsValid(scopes []string) bool {
 	return true
 }
 
-// The token service is responsible for storing, deleting and retrieving access token
-type TokenService interface {
-	// Create a new access token and persist it to storage
-	CreateAccessToken(owner OauthTokenOwner, client *OauthClient, scopes []string) (*token.OauthAccessToken, *OauthError)
-	// Create a new refresh token and persist it to storage
-	CreateRefreshToken(owner OauthTokenOwner, client *OauthClient, scopes []string) (*token.OauthRefreshToken, *OauthError)
-	// Return an access token by its token
-	GetAccessTokenByToken(token string) (*token.OauthAccessToken, *OauthError)
-	// Return a refresh token by its token
-	GetRefreshTokenByToken(token string) (*token.OauthRefreshToken, *OauthError)
-	// Delete an access token by its token
-	DeleteAccessTokenByToken(token string) *OauthError
-	// Delete a refresh token by its token
-	DeleteRefreshTokenByToken(token string) *OauthError
+type OauthAccessToken struct {
+	*OauthToken
+
+	// Postgres
+	TableName struct{} `sql:"oauth_access_tokens"`
+}
+
+func NewOauthAccessToken(
+	clientId string,
+	ownerId OauthTokenOwnerId,
+	duration time.Duration,
+	scopes []string,
+) (*OauthAccessToken, error) {
+	oauthToken, err := newOauthToken(clientId, ownerId, duration, scopes)
+	if err != nil {
+		return nil, err
+	}
+
+	return &OauthAccessToken{OauthToken: oauthToken}, nil
+}
+
+type OauthRefreshToken struct {
+	*OauthToken
+
+	// Postgres
+	TableName struct{} `sql:"oauth_refresh_tokens"`
+}
+
+func NewOauthRefreshToken(
+	clientId string,
+	ownerId OauthTokenOwnerId,
+	duration time.Duration,
+	scopes []string,
+) (*OauthRefreshToken, error) {
+	oauthToken, err := newOauthToken(clientId, ownerId, duration, scopes)
+	if err != nil {
+		return nil, err
+	}
+
+	return &OauthRefreshToken{OauthToken: oauthToken}, nil
+}
+
+type AuthorizationCode struct {
+	*OauthToken
+
+	// Postgres
+	TableName struct{} `json:"oauth_authorization_codes"`
+
+	RedirectUri string
+}
+
+func NewAuthorizationCode(
+	clientId string,
+	ownerId OauthTokenOwnerId,
+	duration time.Duration,
+	scopes []string,
+	redirectUri string,
+) (*AuthorizationCode, error) {
+	oauthToken, err := newOauthToken(clientId, ownerId, duration, scopes)
+	if err != nil {
+		return nil, err
+	}
+
+	return &AuthorizationCode{OauthToken: oauthToken, RedirectUri: redirectUri}, nil
+}
+
+type TokenRepository interface {
+	CreateAccessToken(token *OauthAccessToken) error
+	CreateRefreshToken(token *OauthRefreshToken) error
+
+	GetAccessToken(token string) (*OauthAccessToken, error)
+	GetRefreshToken(token string) (*OauthRefreshToken, error)
+
+	DeleteAccessToken(token string) error
+	DeleteRefreshToken(token string) error
+	DeleteExpiredAccessTokens() error
+	DeleteExpiredRefreshTokens() error
 }
