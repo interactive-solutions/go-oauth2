@@ -15,7 +15,7 @@ type OauthTokenOwnerId string
 type OauthToken struct {
 	Token     string `sql:",pk"`
 	ExpiresAt time.Time
-	Scopes    []string
+	Scopes    []string `pg:",array"`
 	ClientId  string
 	OwnerId   OauthTokenOwnerId
 }
