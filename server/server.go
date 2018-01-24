@@ -190,7 +190,7 @@ func (server *OauthServer) createTokens(
 
 	// Generate new access tokens until we have a unique
 	for {
-		accessToken := oauth2.NewOauthAccessToken(clientId, tokenOwnerId, server.Config.AccessTokenDuration, scopes)
+		accessToken = oauth2.NewOauthAccessToken(clientId, tokenOwnerId, server.Config.AccessTokenDuration, scopes)
 
 		if t, _ := server.tokenRepository.GetAccessToken(accessToken.Token); t == nil {
 			break
