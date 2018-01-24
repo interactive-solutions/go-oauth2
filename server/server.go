@@ -190,10 +190,7 @@ func (server *OauthServer) createTokens(
 
 	// Generate new access tokens until we have a unique
 	for {
-		accessToken, err = oauth2.NewOauthAccessToken(clientId, tokenOwnerId, server.Config.AccessTokenDuration, scopes)
-		if err != nil {
-			return nil, nil, oauth2.NewError(oauth2.ServerErrorErr, err.Error())
-		}
+		accessToken := oauth2.NewOauthAccessToken(clientId, tokenOwnerId, server.Config.AccessTokenDuration, scopes)
 
 		if t, _ := server.tokenRepository.GetAccessToken(accessToken.Token); t == nil {
 			break
@@ -211,10 +208,7 @@ func (server *OauthServer) createTokens(
 		}
 
 		for {
-			refreshToken, err = oauth2.NewOauthRefreshToken(clientId, tokenOwnerId, server.Config.RefreshTokenDuration, scopes)
-			if err != nil {
-				return nil, nil, oauth2.NewError(oauth2.ServerErrorErr, err.Error())
-			}
+			refreshToken = oauth2.NewOauthRefreshToken(clientId, tokenOwnerId, server.Config.RefreshTokenDuration, scopes)
 
 			if t, _ := server.tokenRepository.GetRefreshToken(refreshToken.Token); t == nil {
 				break
@@ -236,10 +230,7 @@ func (server *OauthServer) createTokens(
 
 	for {
 		// Refresh grant and rotating refresh tokens
-		newRefreshToken, err = oauth2.NewOauthRefreshToken(clientId, tokenOwnerId, server.Config.RefreshTokenDuration, scopes)
-		if err != nil {
-			return nil, nil, oauth2.NewError(oauth2.ServerErrorErr, err.Error())
-		}
+		newRefreshToken = oauth2.NewOauthRefreshToken(clientId, tokenOwnerId, server.Config.RefreshTokenDuration, scopes)
 
 		if t, _ := server.tokenRepository.GetRefreshToken(newRefreshToken.Token); t == nil {
 			break

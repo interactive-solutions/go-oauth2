@@ -1,17 +1,14 @@
 package oauth2
 
-import (
-	"crypto/rand"
-	"encoding/base64"
-)
+import "math/rand"
 
-func GenerateRandomString(length uint) (string, error) {
+const letters = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789"
+
+func GenerateRandomString(length uint) string {
 	bytes := make([]byte, length)
-	_, err := rand.Read(bytes)
-	// Note that err == nil only if we read len(bytes) bytes.
-	if err != nil {
-		return "", err
+	for i := range bytes {
+		bytes[i] = letters[rand.Intn(len(letters))]
 	}
 
-	return base64.URLEncoding.EncodeToString(bytes), nil
+	return string(bytes)
 }

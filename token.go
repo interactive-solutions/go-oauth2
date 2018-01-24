@@ -21,11 +21,8 @@ type OauthToken struct {
 }
 
 // Creates an abstract oauth token, SHOULD ONLY be called when creating another token
-func newOauthToken(clientId string, ownerId OauthTokenOwnerId, duration time.Duration, scopes []string) (*OauthToken, error) {
-	oauthToken, err := GenerateRandomString(20)
-	if err != nil {
-		return nil, err
-	}
+func newOauthToken(clientId string, ownerId OauthTokenOwnerId, duration time.Duration, scopes []string) *OauthToken {
+	oauthToken := GenerateRandomString(20)
 
 	return &OauthToken{
 		Token:     oauthToken,
@@ -33,7 +30,7 @@ func newOauthToken(clientId string, ownerId OauthTokenOwnerId, duration time.Dur
 		OwnerId:   ownerId,
 		ExpiresAt: time.Now().Add(duration),
 		Scopes:    scopes,
-	}, nil
+	}
 }
 
 func (token *OauthToken) GetExpiresIn() float64 {
@@ -87,13 +84,8 @@ func NewOauthAccessToken(
 	ownerId OauthTokenOwnerId,
 	duration time.Duration,
 	scopes []string,
-) (*OauthAccessToken, error) {
-	oauthToken, err := newOauthToken(clientId, ownerId, duration, scopes)
-	if err != nil {
-		return nil, err
-	}
-
-	return &OauthAccessToken{OauthToken: oauthToken}, nil
+) *OauthAccessToken {
+	return &OauthAccessToken{OauthToken: newOauthToken(clientId, ownerId, duration, scopes)}
 }
 
 type OauthRefreshToken struct {
@@ -108,13 +100,8 @@ func NewOauthRefreshToken(
 	ownerId OauthTokenOwnerId,
 	duration time.Duration,
 	scopes []string,
-) (*OauthRefreshToken, error) {
-	oauthToken, err := newOauthToken(clientId, ownerId, duration, scopes)
-	if err != nil {
-		return nil, err
-	}
-
-	return &OauthRefreshToken{OauthToken: oauthToken}, nil
+) *OauthRefreshToken {
+	return &OauthRefreshToken{OauthToken: newOauthToken(clientId, ownerId, duration, scopes)}
 }
 
 type AuthorizationCode struct {
@@ -132,13 +119,8 @@ func NewAuthorizationCode(
 	duration time.Duration,
 	scopes []string,
 	redirectUri string,
-) (*AuthorizationCode, error) {
-	oauthToken, err := newOauthToken(clientId, ownerId, duration, scopes)
-	if err != nil {
-		return nil, err
-	}
-
-	return &AuthorizationCode{OauthToken: oauthToken, RedirectUri: redirectUri}, nil
+) *AuthorizationCode {
+	return &AuthorizationCode{OauthToken: newOauthToken(clientId, ownerId, duration, scopes), RedirectUri: redirectUri}
 }
 
 type TokenRepository interface {
