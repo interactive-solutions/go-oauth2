@@ -22,7 +22,7 @@ type OauthToken struct {
 
 // Creates an abstract oauth token, SHOULD ONLY be called when creating another token
 func newOauthToken(clientId string, ownerId OauthTokenOwnerId, duration time.Duration, scopes []string) *OauthToken {
-	oauthToken := GenerateRandomString(20)
+	oauthToken := GenerateRandomString(32)
 
 	return &OauthToken{
 		Token:     oauthToken,
