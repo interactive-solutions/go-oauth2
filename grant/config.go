@@ -2,12 +2,10 @@ package grant
 
 import "time"
 
-func NewDefaultPasswordGrantConfig() PasswordGrantConfig {
-	return PasswordGrantConfig{
-		AccessTokenDuration:  time.Hour,
-		RefreshTokenDuration: time.Hour * 24,
-		GenerateRefreshToken: true,
-	}
+var PasswordGrantDefaultConfig = PasswordGrantConfig{
+	AccessTokenDuration:  time.Hour,
+	RefreshTokenDuration: time.Hour * 24,
+	GenerateRefreshToken: true,
 }
 
 type PasswordGrantConfig struct {
@@ -19,13 +17,11 @@ type PasswordGrantConfig struct {
 	GenerateRefreshToken bool
 }
 
-func NewDefaultRefreshTokenGrantConfig() RefreshTokenGrantConfig {
-	return RefreshTokenGrantConfig{
-		AccessTokenDuration:        time.Hour,
-		RefreshTokenDuration:       time.Hour * 24,
-		RotateRefreshTokens:        false,
-		RevokeRotatedRefreshTokens: false,
-	}
+var RefreshTokenGrantDefaultConfig = RefreshTokenGrantConfig{
+	AccessTokenDuration:        time.Hour,
+	RefreshTokenDuration:       time.Hour * 24,
+	RotateRefreshTokens:        false,
+	RevokeRotatedRefreshTokens: false,
 }
 
 type RefreshTokenGrantConfig struct {
@@ -40,8 +36,8 @@ type RefreshTokenGrantConfig struct {
 	RevokeRotatedRefreshTokens bool
 }
 
-func NewDefaultClientCredentialsGrantConfig() ClientCredentialsGrantConfig {
-	return ClientCredentialsGrantConfig{AccessTokenDuration: time.Hour}
+var DefaultClientCredentialsGrantConfig = ClientCredentialsGrantConfig{
+	AccessTokenDuration: time.Hour,
 }
 
 type ClientCredentialsGrantConfig struct {
