@@ -21,7 +21,10 @@ const (
 )
 
 type OauthGrant interface {
+	// Create and persist authorization code to storage
 	CreateAuthorizationCode(r *http.Request, clientId string) (*AuthorizationCode, error)
+	// Create and persist tokens to storage
 	CreateTokens(r *http.Request, clientId string) (*AccessToken, *RefreshToken, error)
+	// Allow public clients ?
 	AllowPublicClients() bool
 }

@@ -36,7 +36,7 @@ type RefreshTokenGrantConfig struct {
 	RevokeRotatedRefreshTokens bool
 }
 
-var DefaultClientCredentialsGrantConfig = ClientCredentialsGrantConfig{
+var ClientCredentialsGrantDefaultConfig = ClientCredentialsGrantConfig{
 	AccessTokenDuration: time.Hour,
 }
 
