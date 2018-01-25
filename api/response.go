@@ -14,8 +14,8 @@ import (
 
 func WriteTokenResponse(
 	w http.ResponseWriter,
-	accessToken *oauth2.OauthAccessToken,
-	refreshToken *oauth2.OauthRefreshToken,
+	accessToken *oauth2.AccessToken,
+	refreshToken *oauth2.RefreshToken,
 	useRefreshTokenScopes bool,
 ) {
 	w.Header().Set("Content-Type", "application/json")

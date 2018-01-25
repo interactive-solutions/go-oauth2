@@ -72,36 +72,36 @@ func (token *OauthToken) IsValid(scopes []string) bool {
 	return true
 }
 
-type OauthAccessToken struct {
+type AccessToken struct {
 	*OauthToken
 
 	// Postgres
 	TableName struct{} `sql:"oauth_access_tokens"`
 }
 
-func NewOauthAccessToken(
+func NewAccessToken(
 	clientId string,
 	ownerId OauthTokenOwnerId,
 	duration time.Duration,
 	scopes []string,
-) *OauthAccessToken {
-	return &OauthAccessToken{OauthToken: newOauthToken(clientId, ownerId, duration, scopes)}
+) *AccessToken {
+	return &AccessToken{OauthToken: newOauthToken(clientId, ownerId, duration, scopes)}
 }
 
-type OauthRefreshToken struct {
+type RefreshToken struct {
 	*OauthToken
 
 	// Postgres
 	TableName struct{} `sql:"oauth_refresh_tokens"`
 }
 
-func NewOauthRefreshToken(
+func NewRefreshToken(
 	clientId string,
 	ownerId OauthTokenOwnerId,
 	duration time.Duration,
 	scopes []string,
-) *OauthRefreshToken {
-	return &OauthRefreshToken{OauthToken: newOauthToken(clientId, ownerId, duration, scopes)}
+) *RefreshToken {
+	return &RefreshToken{OauthToken: newOauthToken(clientId, ownerId, duration, scopes)}
 }
 
 type AuthorizationCode struct {
@@ -124,11 +124,11 @@ func NewAuthorizationCode(
 }
 
 type TokenRepository interface {
-	CreateAccessToken(token *OauthAccessToken) error
-	CreateRefreshToken(token *OauthRefreshToken) error
+	CreateAccessToken(token *AccessToken) error
+	CreateRefreshToken(token *RefreshToken) error
 
-	GetAccessToken(token string) (*OauthAccessToken, error)
-	GetRefreshToken(token string) (*OauthRefreshToken, error)
+	GetAccessToken(token string) (*AccessToken, error)
+	GetRefreshToken(token string) (*RefreshToken, error)
 
 	DeleteAccessToken(token string) error
 	DeleteRefreshToken(token string) error

@@ -5,11 +5,11 @@ import (
 
 	"fmt"
 
-	"strings"
-
 	"context"
 
 	"time"
+
+	"strings"
 
 	"github.com/interactive-solutions/go-oauth2"
 	"github.com/interactive-solutions/go-oauth2/api"
@@ -63,7 +63,7 @@ func (server *OauthServer) getGrant(grantType oauth2.GrantType) (oauth2.OauthGra
 }
 
 // Get the client
-func (server *OauthServer) getClient(r *http.Request, allowPublicClients bool) (string, string, error) {
+func (server *OauthServer) getClient(r *http.Request, allowPublicClients bool) (string, error) {
 	clientId, clientSecret, ok := r.BasicAuth()
 	if !ok {
 		// Could not get client from basic authentication, check form data
@@ -72,25 +72,37 @@ func (server *OauthServer) getClient(r *http.Request, allowPublicClients bool) (
 	}
 
 	if !allowPublicClients && clientSecret == "" {
-		return "", "", oauth2.NewError(oauth2.InvalidClientErr, "Client secret is missing")
+		return "", oauth2.NewError(oauth2.InvalidClientErr, "Client secret is missing")
 	}
 
 	if allowPublicClients && clientId == "" {
-		return "", "", nil
+		return "", nil
 	}
 
 	// Authorize client if we have a handler set
 	if server.Config.ClientAuthorizedHandler != nil {
 		authorized, err := server.Config.ClientAuthorizedHandler(clientId, clientSecret)
 		if err != nil {
-			return "", "", err
+			return "", err
 		} else if !authorized {
-			return "", "", oauth2.NewError(oauth2.InvalidClientErr, "Client authentication failed")
+			return "", oauth2.NewError(oauth2.InvalidClientErr, "Client authentication failed")
+		}
+	}
+
+	// Check if client can access scope if we have handler set
+	if server.Config.ClientScopeHandler != nil && r.FormValue("scope") != "" {
+		allowed, err := server.Config.ClientScopeHandler(clientId, strings.Split(r.FormValue("scope"), " "))
+		if err != nil {
+			return "", err
+		}
+
+		if !allowed {
+			return "", oauth2.NewError(oauth2.InvalidScopeErr, "Client not allowed to access provided scope")
 		}
 	}
 
 	// We have no handler set, allow credentials to pass as default
-	return clientId, clientSecret, nil
+	return clientId, nil
 }
 
 func (server *OauthServer) HandleAuthorizationRequest(w http.ResponseWriter, r *http.Request) {
@@ -116,40 +128,13 @@ func (server *OauthServer) HandleTokenRequest(w http.ResponseWriter, r *http.Req
 		return
 	}
 
-	clientId, clientSecret, err := server.getClient(r, oauthGrant.AllowPublicClients())
+	clientId, err := server.getClient(r, oauthGrant.AllowPublicClients())
 	if err != nil {
 		server.writeError(w, err)
 		return
 	}
 
-	tokenOwnerId, err := oauthGrant.Authorize(r, clientId, clientSecret)
-	if err != nil {
-		server.writeError(w, err)
-		return
-	}
-
-	scopes := strings.Split(r.FormValue("scope"), " ")
-	var refreshToken *oauth2.OauthRefreshToken
-
-	if grantType == oauth2.GrantTypeRefreshToken {
-		if r.FormValue("refresh_token") == "" {
-			server.writeError(w, oauth2.NewError(oauth2.InvalidRequestErr, "Refresh token is missing"))
-			return
-		}
-
-		refreshToken, err = server.tokenRepository.GetRefreshToken(r.FormValue("refresh_token"))
-		if err != nil {
-			server.writeError(w, err)
-			return
-		}
-
-		if !refreshToken.IsValid(scopes) {
-			server.writeError(w, oauth2.NewError(oauth2.InvalidGrantErr, "Refresh expired or has been deleted"))
-			return
-		}
-	}
-
-	accessToken, refreshToken, err := server.createTokens(tokenOwnerId, clientId, scopes, refreshToken)
+	accessToken, refreshToken, err := oauthGrant.CreateTokens(r, clientId)
 	if err != nil {
 		server.writeError(w, err)
 		return
@@ -176,76 +161,4 @@ func (server *OauthServer) writeError(w http.ResponseWriter, err error) {
 	}
 
 	api.WriteErrorResponse(w, oauthError)
-}
-
-// todo: cleanup
-func (server *OauthServer) createTokens(
-	tokenOwnerId oauth2.OauthTokenOwnerId,
-	clientId string,
-	scopes []string,
-	refreshToken *oauth2.OauthRefreshToken,
-) (*oauth2.OauthAccessToken, *oauth2.OauthRefreshToken, error) {
-	var accessToken *oauth2.OauthAccessToken
-	var err error
-
-	// Generate new access tokens until we have a unique
-	for {
-		accessToken = oauth2.NewOauthAccessToken(clientId, tokenOwnerId, server.Config.AccessTokenDuration, scopes)
-
-		if t, _ := server.tokenRepository.GetAccessToken(accessToken.Token); t == nil {
-			break
-		}
-	}
-
-	if err = server.tokenRepository.CreateAccessToken(accessToken); err != nil {
-		return nil, nil, oauth2.NewError(oauth2.ServerErrorErr, err.Error())
-	}
-
-	// Are we generating tokens using refresh grant ?
-	if refreshToken == nil {
-		if !server.Config.GenerateRefreshToken {
-			return accessToken, nil, nil
-		}
-
-		for {
-			refreshToken = oauth2.NewOauthRefreshToken(clientId, tokenOwnerId, server.Config.RefreshTokenDuration, scopes)
-
-			if t, _ := server.tokenRepository.GetRefreshToken(refreshToken.Token); t == nil {
-				break
-			}
-		}
-
-		if err = server.tokenRepository.CreateRefreshToken(refreshToken); err != nil {
-			return nil, nil, oauth2.NewError(oauth2.ServerErrorErr, err.Error())
-		}
-
-		return accessToken, refreshToken, nil
-	}
-
-	if !server.Config.RotateRefreshTokens {
-		return accessToken, refreshToken, nil
-	}
-
-	var newRefreshToken *oauth2.OauthRefreshToken
-
-	for {
-		// Refresh grant and rotating refresh tokens
-		newRefreshToken = oauth2.NewOauthRefreshToken(clientId, tokenOwnerId, server.Config.RefreshTokenDuration, scopes)
-
-		if t, _ := server.tokenRepository.GetRefreshToken(newRefreshToken.Token); t == nil {
-			break
-		}
-	}
-
-	if err = server.tokenRepository.CreateRefreshToken(newRefreshToken); err != nil {
-		return nil, nil, oauth2.NewError(oauth2.ServerErrorErr, err.Error())
-	}
-
-	if server.Config.RevokeRotatedRefreshTokens {
-		if err = server.tokenRepository.DeleteRefreshToken(refreshToken.Token); err != nil {
-			return nil, nil, oauth2.NewError(oauth2.ServerErrorErr, err.Error())
-		}
-	}
-
-	return accessToken, newRefreshToken, nil
 }

@@ -4,6 +4,13 @@ import (
 	"net/http"
 )
 
+type ResponseType string
+
+const (
+	ResponseTypeCode  = "code"
+	ResponseTypeToken = "token"
+)
+
 type GrantType string
 
 const (
@@ -14,6 +21,7 @@ const (
 )
 
 type OauthGrant interface {
-	Authorize(r *http.Request, clientId, clientSecret string) (OauthTokenOwnerId, error)
+	CreateAuthorizationCode(r *http.Request, clientId string) (*AuthorizationCode, error)
+	CreateTokens(r *http.Request, clientId string) (*AccessToken, *RefreshToken, error)
 	AllowPublicClients() bool
 }

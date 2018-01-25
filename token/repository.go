@@ -17,16 +17,16 @@ func NewTokenRepository(db *pg.DB) oauth2.TokenRepository {
 	}
 }
 
-func (repository *tokenRepository) CreateAccessToken(token *oauth2.OauthAccessToken) error {
+func (repository *tokenRepository) CreateAccessToken(token *oauth2.AccessToken) error {
 	return repository.db.Insert(token)
 }
 
-func (repository *tokenRepository) CreateRefreshToken(token *oauth2.OauthRefreshToken) error {
+func (repository *tokenRepository) CreateRefreshToken(token *oauth2.RefreshToken) error {
 	return repository.db.Insert(token)
 }
 
-func (repository *tokenRepository) GetAccessToken(token string) (*oauth2.OauthAccessToken, error) {
-	accessToken := &oauth2.OauthAccessToken{}
+func (repository *tokenRepository) GetAccessToken(token string) (*oauth2.AccessToken, error) {
+	accessToken := &oauth2.AccessToken{}
 
 	err := repository.db.Model(accessToken).Where("token = ?", token).Select()
 	if err == pg.ErrNoRows {
@@ -36,8 +36,8 @@ func (repository *tokenRepository) GetAccessToken(token string) (*oauth2.OauthAc
 	return accessToken, nil
 }
 
-func (repository *tokenRepository) GetRefreshToken(token string) (*oauth2.OauthRefreshToken, error) {
-	refreshToken := &oauth2.OauthRefreshToken{}
+func (repository *tokenRepository) GetRefreshToken(token string) (*oauth2.RefreshToken, error) {
+	refreshToken := &oauth2.RefreshToken{}
 
 	err := repository.db.Model(refreshToken).Where("token = ?", token).Select()
 	if err == pg.ErrNoRows {
@@ -48,7 +48,7 @@ func (repository *tokenRepository) GetRefreshToken(token string) (*oauth2.OauthR
 }
 
 func (repository *tokenRepository) DeleteAccessToken(token string) error {
-	accessToken := &oauth2.OauthAccessToken{}
+	accessToken := &oauth2.AccessToken{}
 
 	_, err := repository.db.Model(accessToken).Where("token = ?", token).Delete()
 
@@ -56,7 +56,7 @@ func (repository *tokenRepository) DeleteAccessToken(token string) error {
 }
 
 func (repository *tokenRepository) DeleteRefreshToken(token string) error {
-	refreshToken := &oauth2.OauthRefreshToken{}
+	refreshToken := &oauth2.RefreshToken{}
 
 	_, err := repository.db.Model(refreshToken).Where("token = ?", token).Delete()
 
@@ -64,7 +64,7 @@ func (repository *tokenRepository) DeleteRefreshToken(token string) error {
 }
 
 func (repository *tokenRepository) DeleteExpiredAccessTokens() error {
-	accessToken := &oauth2.OauthAccessToken{}
+	accessToken := &oauth2.AccessToken{}
 
 	_, err := repository.db.Model(accessToken).Where("expires_at < ?", time.Now()).Delete()
 
@@ -72,7 +72,7 @@ func (repository *tokenRepository) DeleteExpiredAccessTokens() error {
 }
 
 func (repository *tokenRepository) DeleteExpiredRefreshTokens() error {
-	refreshToken := &oauth2.OauthRefreshToken{}
+	refreshToken := &oauth2.RefreshToken{}
 
 	_, err := repository.db.Model(refreshToken).Where("expires_at < ?", time.Now()).Delete()
 
