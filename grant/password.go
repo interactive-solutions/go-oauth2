@@ -60,14 +60,14 @@ func (grant *passwordGrant) CreateTokens(r *http.Request, clientId string) (*oau
 	// Generate access token until it is unique
 	accessToken, err = grant.server.CreateAccessToken(clientId, tokenOwnerId, grant.config.AccessTokenDuration, scopes)
 	if err != nil {
-		return nil, nil, oauth2.NewError(oauth2.ServerErrorErr, "Failed to create access token")
+		return nil, nil, oauth2.NewError(oauth2.ServerErrorErr, err.Error())
 	}
 
 	// Should we also generate a refresh token
 	if grant.config.GenerateRefreshToken {
 		refreshToken, err = grant.server.CreateRefreshToken(clientId, tokenOwnerId, grant.config.RefreshTokenDuration, scopes)
 		if err != nil {
-			return nil, nil, oauth2.NewError(oauth2.ServerErrorErr, "Failed to create refresh token")
+			return nil, nil, oauth2.NewError(oauth2.ServerErrorErr, err.Error())
 		}
 	}
 
