@@ -2,7 +2,6 @@ package grant
 
 import (
 	"net/http"
-
 	"strings"
 
 	"github.com/interactive-solutions/go-oauth2"
@@ -10,22 +9,18 @@ import (
 
 type PasswordAuthorizationHandler func(username, password string) (oauth2.OauthTokenOwnerId, error)
 
-type passwordGrant struct {
-	Handler         PasswordAuthorizationHandler
-	TokenRepository oauth2.TokenRepository
-	Config          PasswordGrantConfig
+func NewPasswordGrant(server oauth2.Server, handler PasswordAuthorizationHandler, config PasswordGrantConfig) oauth2.OauthGrant {
+	return &passwordGrant{
+		server:  server,
+		handler: handler,
+		config:  config,
+	}
 }
 
-func NewPasswordGrant(
-	handler PasswordAuthorizationHandler,
-	tokenRepository oauth2.TokenRepository,
-	config PasswordGrantConfig,
-) oauth2.OauthGrant {
-	return &passwordGrant{
-		Handler:         handler,
-		TokenRepository: tokenRepository,
-		Config:          config,
-	}
+type passwordGrant struct {
+	server  oauth2.Server
+	handler PasswordAuthorizationHandler
+	config  PasswordGrantConfig
 }
 
 func (grant *passwordGrant) CreateAuthorizationCode(r *http.Request, clientId string) (*oauth2.AuthorizationCode, error) {
@@ -41,12 +36,19 @@ func (grant *passwordGrant) CreateTokens(r *http.Request, clientId string) (*oau
 		return nil, nil, oauth2.NewError(oauth2.InvalidRequestErr, "Missing username and/or password")
 	}
 
-	if grant.Handler == nil {
+	if err := grant.server.CallbackPreGrant(username, r.RemoteAddr); err != nil {
+		return nil, nil, err
+	}
+
+	if grant.handler == nil {
 		return nil, nil, oauth2.NewError(oauth2.ServerErrorErr, "Password grant not configured correctly")
 	}
 
-	tokenOwnerId, err := grant.Handler(username, password)
+	tokenOwnerId, err := grant.handler(username, password)
 	if err != nil {
+		// Log the failure
+		grant.server.CallbackPostGrant(username, r.RemoteAddr, false)
+
 		return nil, nil, err
 	}
 
@@ -54,32 +56,21 @@ func (grant *passwordGrant) CreateTokens(r *http.Request, clientId string) (*oau
 	var refreshToken *oauth2.RefreshToken
 
 	// Generate access token until it is unique
-	for {
-		accessToken = oauth2.NewAccessToken(clientId, tokenOwnerId, grant.Config.AccessTokenDuration, scopes)
-
-		if t, _ := grant.TokenRepository.GetAccessToken(accessToken.Token); t == nil {
-			break
-		}
-	}
-
-	if err = grant.TokenRepository.CreateAccessToken(accessToken); err != nil {
-		return nil, nil, oauth2.NewError(oauth2.ServerErrorErr, err.Error())
+	accessToken, err = grant.server.CreateAccessToken(clientId, tokenOwnerId, grant.config.AccessTokenDuration, scopes)
+	if err != nil {
+		return nil, nil, oauth2.NewError(oauth2.ServerErrorErr, "Failed to create access token")
 	}
 
 	// Should we also generate a refresh token
-	if grant.Config.GenerateRefreshToken {
-		// Generate a refresh token until it is unique
-		for {
-			refreshToken = oauth2.NewRefreshToken(clientId, tokenOwnerId, grant.Config.RefreshTokenDuration, scopes)
-
-			if t, _ := grant.TokenRepository.GetRefreshToken(refreshToken.Token); t == nil {
-				break
-			}
+	if grant.config.GenerateRefreshToken {
+		refreshToken, err = grant.server.CreateRefreshToken(clientId, tokenOwnerId, grant.config.RefreshTokenDuration, scopes)
+		if err != nil {
+			return nil, nil, oauth2.NewError(oauth2.ServerErrorErr, "Failed to create refresh token")
 		}
+	}
 
-		if err = grant.TokenRepository.CreateRefreshToken(refreshToken); err != nil {
-			return nil, nil, oauth2.NewError(oauth2.ServerErrorErr, err.Error())
-		}
+	if err := grant.server.CallbackPostGrant(username, r.RemoteAddr, true); err != nil {
+		return nil, nil, err
 	}
 
 	return accessToken, refreshToken, nil

@@ -1,17 +1,11 @@
-package server
-
-import (
-	"github.com/interactive-solutions/go-oauth2"
-)
-
-// todo: implement this
+package oauth2
 
 var (
 	ServerDefaultConfig = ServerConfig{
-		Grants: map[oauth2.GrantType]oauth2.OauthGrant{},
-		ErrorMap: map[error]oauth2.OauthError{
-			oauth2.RefreshTokenNotFoundErr: {
-				Err:         oauth2.InvalidGrantErr,
+		Grants: map[GrantType]OauthGrant{},
+		ErrorMap: map[error]OauthError{
+			RefreshTokenNotFoundErr: {
+				Err:         InvalidGrantErr,
 				Description: "Refresh has expired or been deleted",
 			},
 		},
@@ -26,7 +20,7 @@ var (
 
 type ServerConfig struct {
 	// Grants
-	Grants map[oauth2.GrantType]oauth2.OauthGrant
+	Grants map[GrantType]OauthGrant
 
 	// Authorize the client
 	ClientAuthorizedHandler func(clientId, clientSecret string) (bool, error)
@@ -35,5 +29,5 @@ type ServerConfig struct {
 	ClientScopeHandler func(clientId string, scopes []string) (bool, error)
 
 	// Error map
-	ErrorMap map[error]oauth2.OauthError
+	ErrorMap map[error]OauthError
 }
