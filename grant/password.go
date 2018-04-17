@@ -46,12 +46,10 @@ func (grant *passwordGrant) CreateTokens(r *http.Request, clientId string) (*oau
 
 	tokenOwnerId, err := grant.handler(username, password)
 	if err != nil {
-		// Log the failure
-		grant.server.CallbackPostGrant(username, r.RemoteAddr, false)
+		// Empty token signals a failed authentication attempt
+		grant.server.CallbackPostGrant(username, r.RemoteAddr, "")
 
 		return nil, nil, err
-	} else {
-		grant.server.CallbackPostGrant(username, r.RemoteAddr, true)
 	}
 
 	var accessToken *oauth2.AccessToken
@@ -70,6 +68,9 @@ func (grant *passwordGrant) CreateTokens(r *http.Request, clientId string) (*oau
 			return nil, nil, oauth2.NewError(oauth2.ServerErrorErr, err.Error())
 		}
 	}
+
+	// Callback with a valid token signals a successful login
+	grant.server.CallbackPostGrant(username, r.RemoteAddr, accessToken.Token)
 
 	return accessToken, refreshToken, nil
 }

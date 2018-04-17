@@ -4,16 +4,10 @@ import (
 	"context"
 	"net/http"
 	"time"
-
-	"github.com/pkg/errors"
-)
-
-var (
-	RateLimitedErr = errors.New("Too many authentication requests has been sent")
 )
 
 type CallbackPreGrant func(identifier, ipAddr string) error
-type CallbackPostGrant func(identifier, ipAddr string, result bool)
+type CallbackPostGrant func(identifier, ipAddr, token string)
 
 type Server interface {
 	// PeriodicallyDeleteExpiredTokens
@@ -29,7 +23,8 @@ type Server interface {
 	CallbackPreGrant(identifier, ipAddr string) error
 
 	// CallbackPostGrant is called after the grant has been executed with the result of the authentication
-	CallbackPostGrant(identifier, ipAddr string, success bool)
+	// If the token is provided one the authentication MUST have been successfull
+	CallbackPostGrant(identifier, ipAddr, token string)
 
 	// HandleTokenRequest usually listens to /oauth/token
 	HandleTokenRequest(w http.ResponseWriter, r *http.Request)

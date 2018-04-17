@@ -20,7 +20,7 @@ var (
 			return nil
 		},
 
-		CallbackPostGrant: func(identifier, ipAddr string, result bool) {
+		CallbackPostGrant: func(identifier, ipAddr, token string) {
 
 		},
 	}
