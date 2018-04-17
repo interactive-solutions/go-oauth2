@@ -2,21 +2,22 @@ package grant
 
 import (
 	"net/http"
-
 	"strings"
 
 	"github.com/interactive-solutions/go-oauth2"
 )
 
 type refreshTokenGrant struct {
-	Config          RefreshTokenGrantConfig
-	TokenRepository oauth2.TokenRepository
+	config     RefreshTokenGrantConfig
+	server     oauth2.Server
+	repository oauth2.TokenRepository
 }
 
-func NewRefreshTokenGrant(tokenRepository oauth2.TokenRepository, config RefreshTokenGrantConfig) oauth2.OauthGrant {
+func NewRefreshTokenGrant(server oauth2.Server, repository oauth2.TokenRepository, config RefreshTokenGrantConfig) oauth2.OauthGrant {
 	return &refreshTokenGrant{
-		TokenRepository: tokenRepository,
-		Config:          config,
+		config:     config,
+		server:     server,
+		repository: repository,
 	}
 }
 
@@ -32,12 +33,8 @@ func (grant *refreshTokenGrant) CreateTokens(r *http.Request, clientId string) (
 		return nil, nil, oauth2.NewError(oauth2.InvalidRequestErr, "Missing refresh token")
 	}
 
-	if grant.TokenRepository == nil {
-		return nil, nil, oauth2.NewError(oauth2.ServerErrorErr, "Refresh token grant not configured correctly")
-	}
-
 	// Retrieve refresh token from repository
-	refreshToken, err := grant.TokenRepository.GetRefreshToken(providedToken)
+	refreshToken, err := grant.repository.GetRefreshToken(providedToken)
 	if err != nil {
 		return nil, nil, err
 	}
@@ -52,43 +49,25 @@ func (grant *refreshTokenGrant) CreateTokens(r *http.Request, clientId string) (
 	}
 
 	var accessToken *oauth2.AccessToken
-
-	// Generate access token until it is unique
-	for {
-		accessToken = oauth2.NewAccessToken(clientId, refreshToken.OwnerId, grant.Config.AccessTokenDuration, scopes)
-
-		if t, _ := grant.TokenRepository.GetAccessToken(accessToken.Token); t == nil {
-			break
-		}
-	}
-
-	if err = grant.TokenRepository.CreateAccessToken(accessToken); err != nil {
-		return nil, nil, oauth2.NewError(oauth2.ServerErrorErr, err.Error())
-	}
-
-	// Should we generate a new refresh token ?
-	if !grant.Config.RotateRefreshTokens {
-		return accessToken, refreshToken, nil
-	}
-
 	var newRefreshToken *oauth2.RefreshToken
 
-	for {
-		// Refresh grant and rotating refresh tokens
-		newRefreshToken = oauth2.NewRefreshToken(clientId, refreshToken.OwnerId, grant.Config.RefreshTokenDuration, scopes)
-
-		if t, _ := grant.TokenRepository.GetRefreshToken(newRefreshToken.Token); t == nil {
-			break
-		}
+	// Generate access token until it is unique
+	accessToken, err = grant.server.CreateAccessToken(clientId, refreshToken.OwnerId, grant.config.AccessTokenDuration, scopes)
+	if err != nil {
+		return nil, nil, oauth2.NewError(oauth2.ServerErrorErr, err.Error())
 	}
 
-	if err = grant.TokenRepository.CreateRefreshToken(newRefreshToken); err != nil {
-		return nil, nil, oauth2.NewError(oauth2.ServerErrorErr, err.Error())
+	// Should we also generate a refresh token
+	if grant.config.RotateRefreshTokens {
+		refreshToken, err = grant.server.CreateRefreshToken(clientId, refreshToken.OwnerId, grant.config.RefreshTokenDuration, scopes)
+		if err != nil {
+			return nil, nil, oauth2.NewError(oauth2.ServerErrorErr, err.Error())
+		}
 	}
 
 	// Should we delete the old refresh token ?
-	if grant.Config.RevokeRotatedRefreshTokens {
-		if err = grant.TokenRepository.DeleteRefreshToken(refreshToken.Token); err != nil {
+	if grant.config.RevokeRotatedRefreshTokens {
+		if err = grant.repository.DeleteRefreshToken(refreshToken.Token); err != nil {
 			return nil, nil, oauth2.NewError(oauth2.ServerErrorErr, err.Error())
 		}
 	}

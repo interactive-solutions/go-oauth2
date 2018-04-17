@@ -1,30 +1,26 @@
 package server
 
 import (
-	"net/http"
-
-	"fmt"
-
 	"context"
-
-	"time"
-
+	"fmt"
+	"net/http"
 	"strings"
+	"time"
 
 	"github.com/interactive-solutions/go-oauth2"
 	"github.com/interactive-solutions/go-oauth2/api"
 )
 
 type OauthServer struct {
-	Config          ServerConfig
+	Config          oauth2.ServerConfig
 	tokenRepository oauth2.TokenRepository
 }
 
 func NewDefaultOauthServer(tokenRepository oauth2.TokenRepository) *OauthServer {
-	return NewOauthServer(ServerDefaultConfig, tokenRepository)
+	return NewOauthServer(oauth2.ServerDefaultConfig, tokenRepository)
 }
 
-func NewOauthServer(config ServerConfig, tokenRepository oauth2.TokenRepository) *OauthServer {
+func NewOauthServer(config oauth2.ServerConfig, tokenRepository oauth2.TokenRepository) *OauthServer {
 	if tokenRepository == nil {
 		panic("No token repository given to oauth2 server")
 	}
@@ -33,6 +29,42 @@ func NewOauthServer(config ServerConfig, tokenRepository oauth2.TokenRepository)
 		Config:          config,
 		tokenRepository: tokenRepository,
 	}
+}
+
+func (server *OauthServer) CreateAccessToken(clientId string, owner oauth2.OauthTokenOwnerId, duration time.Duration, scopes []string) (*oauth2.AccessToken, error) {
+	var accessToken *oauth2.AccessToken
+
+	for {
+		accessToken = oauth2.NewAccessToken(clientId, owner, duration, scopes)
+
+		if t, _ := server.tokenRepository.GetAccessToken(accessToken.Token); t == nil {
+			break
+		}
+	}
+
+	if err := server.tokenRepository.CreateAccessToken(accessToken); err != nil {
+		return nil, oauth2.NewError(oauth2.ServerErrorErr, err.Error())
+	}
+
+	return accessToken, nil
+}
+
+func (server *OauthServer) CreateRefreshToken(clientId string, owner oauth2.OauthTokenOwnerId, duration time.Duration, scopes []string) (*oauth2.RefreshToken, error) {
+	var refreshToken *oauth2.RefreshToken
+
+	for {
+		refreshToken = oauth2.NewRefreshToken(clientId, owner, duration, scopes)
+
+		if t, _ := server.tokenRepository.GetAccessToken(refreshToken.Token); t == nil {
+			break
+		}
+	}
+
+	if err := server.tokenRepository.CreateRefreshToken(refreshToken); err != nil {
+		return nil, oauth2.NewError(oauth2.ServerErrorErr, err.Error())
+	}
+
+	return refreshToken, nil
 }
 
 func (server *OauthServer) PeriodicallyDeleteExpiredTokens(ctx context.Context, interval time.Duration) {
@@ -48,6 +80,49 @@ func (server *OauthServer) PeriodicallyDeleteExpiredTokens(ctx context.Context, 
 
 		timer.Reset(interval)
 	}
+}
+
+func (server *OauthServer) HandleAuthorizationRequest(w http.ResponseWriter, r *http.Request) {
+	responseType := r.FormValue("response_type")
+
+	if responseType == "" {
+		server.writeError(w, oauth2.NewError(oauth2.InvalidRequestErr, "No grant response type was found in request"))
+		return
+	}
+}
+
+func (server *OauthServer) HandleTokenRequest(w http.ResponseWriter, r *http.Request) {
+	grantType := r.FormValue("grant_type")
+
+	if grantType == "" {
+		server.writeError(w, oauth2.NewError(oauth2.InvalidRequestErr, "No grant type was found in the request"))
+		return
+	}
+
+	oauthGrant, err := server.getGrant(oauth2.GrantType(grantType))
+	if err != nil {
+		server.writeError(w, err)
+		return
+	}
+
+	clientId, err := server.getClient(r, oauthGrant.AllowPublicClients())
+	if err != nil {
+		server.writeError(w, err)
+		return
+	}
+
+	accessToken, refreshToken, err := oauthGrant.CreateTokens(r, clientId)
+	if err != nil {
+		server.writeError(w, err)
+		return
+	}
+
+	useRefreshTokenScope := false
+	if grantType == oauth2.GrantTypeRefreshToken {
+		useRefreshTokenScope = true
+	}
+
+	api.WriteTokenResponse(w, accessToken, refreshToken, useRefreshTokenScope)
 }
 
 // Get grant by name
@@ -103,49 +178,6 @@ func (server *OauthServer) getClient(r *http.Request, allowPublicClients bool) (
 
 	// We have no handler set, allow credentials to pass as default
 	return clientId, nil
-}
-
-func (server *OauthServer) HandleAuthorizationRequest(w http.ResponseWriter, r *http.Request) {
-	responseType := r.FormValue("response_type")
-
-	if responseType == "" {
-		server.writeError(w, oauth2.NewError(oauth2.InvalidRequestErr, "No grant response type was found in request"))
-		return
-	}
-}
-
-func (server *OauthServer) HandleTokenRequest(w http.ResponseWriter, r *http.Request) {
-	grantType := r.FormValue("grant_type")
-
-	if grantType == "" {
-		server.writeError(w, oauth2.NewError(oauth2.InvalidRequestErr, "No grant type was found in the request"))
-		return
-	}
-
-	oauthGrant, err := server.getGrant(oauth2.GrantType(grantType))
-	if err != nil {
-		server.writeError(w, err)
-		return
-	}
-
-	clientId, err := server.getClient(r, oauthGrant.AllowPublicClients())
-	if err != nil {
-		server.writeError(w, err)
-		return
-	}
-
-	accessToken, refreshToken, err := oauthGrant.CreateTokens(r, clientId)
-	if err != nil {
-		server.writeError(w, err)
-		return
-	}
-
-	useRefreshTokenScope := false
-	if grantType == oauth2.GrantTypeRefreshToken {
-		useRefreshTokenScope = true
-	}
-
-	api.WriteTokenResponse(w, accessToken, refreshToken, useRefreshTokenScope)
 }
 
 func (server *OauthServer) writeError(w http.ResponseWriter, err error) {
