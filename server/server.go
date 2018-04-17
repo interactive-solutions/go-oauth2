@@ -31,6 +31,14 @@ func NewOauthServer(config oauth2.ServerConfig, tokenRepository oauth2.TokenRepo
 	}
 }
 
+func (server *OauthServer) CallbackPreGrant(identifier, ipAddr string) error {
+	return server.Config.CallbackPreGrant(identifier, ipAddr)
+}
+
+func (server *OauthServer) CallbackPostGrant(identifier, ipAddr string, result bool) {
+	server.Config.CallbackPostGrant(identifier, ipAddr, result)
+}
+
 func (server *OauthServer) CreateAccessToken(clientId string, owner oauth2.OauthTokenOwnerId, duration time.Duration, scopes []string) (*oauth2.AccessToken, error) {
 	var accessToken *oauth2.AccessToken
 

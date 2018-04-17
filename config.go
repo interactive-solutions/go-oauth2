@@ -15,6 +15,14 @@ var (
 		ClientScopeHandler: func(clientId string, scopes []string) (bool, error) {
 			return true, nil
 		},
+
+		CallbackPreGrant: func(identifier, ipAddr string) error {
+			return nil
+		},
+
+		CallbackPostGrant: func(identifier, ipAddr string, result bool) {
+
+		},
 	}
 )
 
@@ -30,4 +38,7 @@ type ServerConfig struct {
 
 	// Error map
 	ErrorMap map[error]OauthError
+
+	CallbackPostGrant CallbackPostGrant
+	CallbackPreGrant  CallbackPreGrant
 }

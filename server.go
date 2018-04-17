@@ -12,6 +12,9 @@ var (
 	RateLimitedErr = errors.New("Too many authentication requests has been sent")
 )
 
+type CallbackPreGrant func(identifier, ipAddr string) error
+type CallbackPostGrant func(identifier, ipAddr string, result bool)
+
 type Server interface {
 	// PeriodicallyDeleteExpiredTokens
 	PeriodicallyDeleteExpiredTokens(ctx context.Context, interval time.Duration)
