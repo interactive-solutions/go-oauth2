@@ -50,6 +50,8 @@ func (grant *passwordGrant) CreateTokens(r *http.Request, clientId string) (*oau
 		grant.server.CallbackPostGrant(username, r.RemoteAddr, false)
 
 		return nil, nil, err
+	} else {
+		grant.server.CallbackPostGrant(username, r.RemoteAddr, true)
 	}
 
 	var accessToken *oauth2.AccessToken
@@ -67,10 +69,6 @@ func (grant *passwordGrant) CreateTokens(r *http.Request, clientId string) (*oau
 		if err != nil {
 			return nil, nil, oauth2.NewError(oauth2.ServerErrorErr, "Failed to create refresh token")
 		}
-	}
-
-	if err := grant.server.CallbackPostGrant(username, r.RemoteAddr, true); err != nil {
-		return nil, nil, err
 	}
 
 	return accessToken, refreshToken, nil

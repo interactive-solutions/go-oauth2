@@ -26,7 +26,7 @@ type Server interface {
 	CallbackPreGrant(identifier, ipAddr string) error
 
 	// CallbackPostGrant is called after the grant has been executed with the result of the authentication
-	CallbackPostGrant(identifier, ipAddr string, success bool) error
+	CallbackPostGrant(identifier, ipAddr string, success bool)
 
 	// HandleTokenRequest usually listens to /oauth/token
 	HandleTokenRequest(w http.ResponseWriter, r *http.Request)
