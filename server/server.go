@@ -63,7 +63,7 @@ func (server *OauthServer) CreateRefreshToken(clientId string, owner oauth2.Oaut
 	for {
 		refreshToken = oauth2.NewRefreshToken(clientId, owner, duration, scopes)
 
-		if t, _ := server.tokenRepository.GetAccessToken(refreshToken.Token); t == nil {
+		if t, _ := server.tokenRepository.GetRefreshToken(refreshToken.Token); t == nil {
 			break
 		}
 	}
