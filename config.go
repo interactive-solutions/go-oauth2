@@ -23,6 +23,9 @@ var (
 		CallbackPostGrant: func(identifier, ipAddr, token string) {
 
 		},
+
+		IsBehindProxy: false,
+		ProxyIpHeader: "X-Forwarded-For",
 	}
 )
 
@@ -41,4 +44,8 @@ type ServerConfig struct {
 
 	CallbackPostGrant CallbackPostGrant
 	CallbackPreGrant  CallbackPreGrant
+
+	// If the server is hiding behind a reverse proxy thus check the headers first
+	IsBehindProxy bool
+	ProxyIpHeader string
 }

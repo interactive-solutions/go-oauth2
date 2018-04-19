@@ -31,4 +31,7 @@ type Server interface {
 
 	// HandleAuthorizationRequest usually listens /oauth/authorize
 	HandleAuthorizationRequest(w http.ResponseWriter, r *http.Request)
+
+	// GetRemoteAddr gets the remote ip address from the request
+	GetRemoteAddr(r *http.Request) string
 }

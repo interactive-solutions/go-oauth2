@@ -47,7 +47,7 @@ func (grant *passwordGrant) CreateTokens(r *http.Request, clientId string) (*oau
 	tokenOwnerId, err := grant.handler(username, password)
 	if err != nil {
 		// Empty token signals a failed authentication attempt
-		grant.server.CallbackPostGrant(username, r.RemoteAddr, "")
+		grant.server.CallbackPostGrant(username, grant.server.GetRemoteAddr(r), "")
 
 		return nil, nil, err
 	}
@@ -70,7 +70,7 @@ func (grant *passwordGrant) CreateTokens(r *http.Request, clientId string) (*oau
 	}
 
 	// Callback with a valid token signals a successful login
-	grant.server.CallbackPostGrant(username, r.RemoteAddr, accessToken.Token)
+	grant.server.CallbackPostGrant(username, grant.server.GetRemoteAddr(r), accessToken.Token)
 
 	return accessToken, refreshToken, nil
 }

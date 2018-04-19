@@ -1,6 +1,8 @@
 package oauth2
 
-import "math/rand"
+import (
+	"math/rand"
+)
 
 const letters = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789"
 

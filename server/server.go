@@ -31,6 +31,16 @@ func NewOauthServer(config oauth2.ServerConfig, tokenRepository oauth2.TokenRepo
 	}
 }
 
+func (server *OauthServer) GetRemoteAddr(r *http.Request) string {
+	if server.Config.IsBehindProxy {
+		if ip := r.Header.Get(server.Config.ProxyIpHeader); ip != "" {
+			return ip
+		}
+	}
+
+	return strings.Split(r.RemoteAddr, ":")[0]
+}
+
 func (server *OauthServer) CallbackPreGrant(identifier, ipAddr string) error {
 	return server.Config.CallbackPreGrant(identifier, ipAddr)
 }
