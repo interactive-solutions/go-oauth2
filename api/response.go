@@ -3,11 +3,9 @@ package api
 import (
 	"encoding/json"
 	"fmt"
-	"net/http"
-
-	"strings"
-
 	"math"
+	"net/http"
+	"strings"
 
 	"github.com/interactive-solutions/go-oauth2"
 )
@@ -21,7 +19,7 @@ func WriteTokenResponse(
 	w.Header().Set("Content-Type", "application/json")
 
 	scopes := accessToken.Scopes
-	if useRefreshTokenScopes {
+	if refreshToken != nil && useRefreshTokenScopes {
 		scopes = refreshToken.Scopes
 	}
 
