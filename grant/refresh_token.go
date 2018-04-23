@@ -56,13 +56,16 @@ func (grant *refreshTokenGrant) CreateTokens(r *http.Request, clientId string) (
 	if err != nil {
 		return nil, nil, oauth2.NewError(oauth2.ServerErrorErr, err.Error())
 	}
+	
+	// Return current refresh token if we're not generating a new one
+	if !grant.config.RotateRefreshToken {
+		return accessToken, refreshToken, nil	
+	}
 
 	// Should we also generate a refresh token
-	if grant.config.RotateRefreshTokens {
-		refreshToken, err = grant.server.CreateRefreshToken(clientId, refreshToken.OwnerId, grant.config.RefreshTokenDuration, scopes)
-		if err != nil {
-			return nil, nil, oauth2.NewError(oauth2.ServerErrorErr, err.Error())
-		}
+	refreshToken, err = grant.server.CreateRefreshToken(clientId, refreshToken.OwnerId, grant.config.RefreshTokenDuration, scopes)
+	if err != nil {
+		return nil, nil, oauth2.NewError(oauth2.ServerErrorErr, err.Error())
 	}
 
 	// Should we delete the old refresh token ?
