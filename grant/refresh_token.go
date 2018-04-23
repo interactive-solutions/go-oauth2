@@ -58,7 +58,7 @@ func (grant *refreshTokenGrant) CreateTokens(r *http.Request, clientId string) (
 	}
 	
 	// Return current refresh token if we're not generating a new one
-	if !grant.config.RotateRefreshToken {
+	if !grant.config.RotateRefreshTokens {
 		return accessToken, refreshToken, nil	
 	}
 
