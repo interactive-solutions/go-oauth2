@@ -49,6 +49,14 @@ func (server *OauthServer) CallbackPostGrant(identifier, ipAddr, token string) {
 	server.Config.CallbackPostGrant(identifier, ipAddr, token)
 }
 
+func (server *OauthServer) CallbackPrePersistAccessToken(accessToken *oauth2.AccessToken) error {
+	return server.Config.CallbackPrePersistAccessToken(accessToken)
+}
+
+func (server *OauthServer) CallbackPrePersistRefreshToken(refreshToken *oauth2.RefreshToken) error {
+	return server.Config.CallbackPrePersistRefreshToken(refreshToken)
+}
+
 func (server *OauthServer) CreateAccessToken(clientId string, owner oauth2.OauthTokenOwnerId, duration time.Duration, scopes []string) (*oauth2.AccessToken, error) {
 	var accessToken *oauth2.AccessToken
 
@@ -58,6 +66,10 @@ func (server *OauthServer) CreateAccessToken(clientId string, owner oauth2.Oauth
 		if t, _ := server.tokenRepository.GetAccessToken(accessToken.Token); t == nil {
 			break
 		}
+	}
+
+	if err := server.CallbackPrePersistAccessToken(accessToken); err != nil {
+		return nil, oauth2.NewError(oauth2.ServerErrorErr, err.Error())
 	}
 
 	if err := server.tokenRepository.CreateAccessToken(accessToken); err != nil {
@@ -76,6 +88,10 @@ func (server *OauthServer) CreateRefreshToken(clientId string, owner oauth2.Oaut
 		if t, _ := server.tokenRepository.GetRefreshToken(refreshToken.Token); t == nil {
 			break
 		}
+	}
+
+	if err := server.CallbackPrePersistRefreshToken(refreshToken); err != nil {
+		return nil, oauth2.NewError(oauth2.ServerErrorErr, err.Error())
 	}
 
 	if err := server.tokenRepository.CreateRefreshToken(refreshToken); err != nil {

@@ -24,6 +24,14 @@ var (
 
 		},
 
+		CallbackPrePersistAccessToken: func(accessToken *AccessToken) error {
+			return nil
+		},
+
+		CallbackPrePersistRefreshToken: func(refreshToken *RefreshToken) error {
+			return nil
+		},
+
 		IsBehindProxy: false,
 		ProxyIpHeader: "X-Forwarded-For",
 	}
@@ -42,8 +50,10 @@ type ServerConfig struct {
 	// Error map
 	ErrorMap map[error]OauthError
 
-	CallbackPostGrant CallbackPostGrant
-	CallbackPreGrant  CallbackPreGrant
+	CallbackPostGrant              CallbackPostGrant
+	CallbackPreGrant               CallbackPreGrant
+	CallbackPrePersistAccessToken  CallbackPrePersistAccessToken
+	CallbackPrePersistRefreshToken CallbackPrePersistRefreshToken
 
 	// If the server is hiding behind a reverse proxy thus check the headers first
 	IsBehindProxy bool
