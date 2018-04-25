@@ -30,11 +30,11 @@ type Server interface {
 
 	// CallbackPrePersistAccessToken is called before an access token is persisted to token storage
 	// Allows an opportunity to modify an access token before it's persisted to storage
-	CallbackPrePersistAccessToken(accessToken AccessToken) error
+	CallbackPrePersistAccessToken(accessToken *AccessToken) error
 
 	// CallbackPrePersistRefreshToken is called before a refresh token is persisted to token storage
 	// Allows an opportunity to modify a refresh token before it's persisted to storage
-	CallbackPrePersistRefreshToken(refreshToken RefreshToken) error
+	CallbackPrePersistRefreshToken(refreshToken *RefreshToken) error
 
 	// HandleTokenRequest usually listens to /oauth/token
 	HandleTokenRequest(w http.ResponseWriter, r *http.Request)
