@@ -27,10 +27,10 @@ func (grant *refreshTokenGrant) CreateAuthorizationCode(r *http.Request, clientI
 
 func (grant *refreshTokenGrant) CreateTokens(r *http.Request, clientId string) (*oauth2.AccessToken, *oauth2.RefreshToken, error) {
 	providedToken := r.FormValue("refresh_token")
-	
+
 	scopes := make([]string, 0)
-	if r.FormValue("scope") != "" {
-		scopes = strings.Split(r.FormValue("scope"), " ")	
+	if providedScopes := r.FormValue("scope"); providedScopes != "" {
+		scopes = strings.Split(providedScopes, " ")
 	}
 
 	if providedToken == "" {

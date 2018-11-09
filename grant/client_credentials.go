@@ -25,7 +25,10 @@ func (grant *clientCredentialsGrant) CreateAuthorizationCode(r *http.Request, cl
 }
 
 func (grant *clientCredentialsGrant) CreateTokens(r *http.Request, clientId string) (*oauth2.AccessToken, *oauth2.RefreshToken, error) {
-	scopes := strings.Split(r.FormValue("scope"), " ")
+	scopes := make([]string, 0)
+	if providedScopes := r.FormValue("scope"); providedScopes != "" {
+		scopes = strings.Split(providedScopes, " ")
+	}
 
 	var accessToken *oauth2.AccessToken
 

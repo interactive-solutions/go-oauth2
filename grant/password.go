@@ -30,7 +30,11 @@ func (grant *passwordGrant) CreateAuthorizationCode(r *http.Request, clientId st
 func (grant *passwordGrant) CreateTokens(r *http.Request, clientId string) (*oauth2.AccessToken, *oauth2.RefreshToken, error) {
 	username := r.FormValue("username")
 	password := r.FormValue("password")
-	scopes := strings.Split(r.FormValue("scope"), " ")
+
+	scopes := make([]string, 0)
+	if providedScopes := r.FormValue("scope"); providedScopes != "" {
+		scopes = strings.Split(providedScopes, " ")
+	}
 
 	if username == "" || password == "" {
 		return nil, nil, oauth2.NewError(oauth2.InvalidRequestErr, "Missing username and/or password")
