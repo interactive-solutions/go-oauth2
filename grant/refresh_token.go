@@ -30,7 +30,7 @@ func (grant *refreshTokenGrant) CreateTokens(r *http.Request, clientId string) (
 	scopes = make([]string, 0)
 	
 	if r.FormValue("scope") != "" {
-		scopes := strings.Split(r.FormValue("scope"), " ")	
+		scopes = strings.Split(r.FormValue("scope"), " ")	
 	}
 
 	if providedToken == "" {
