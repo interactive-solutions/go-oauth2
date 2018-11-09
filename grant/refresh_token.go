@@ -27,7 +27,11 @@ func (grant *refreshTokenGrant) CreateAuthorizationCode(r *http.Request, clientI
 
 func (grant *refreshTokenGrant) CreateTokens(r *http.Request, clientId string) (*oauth2.AccessToken, *oauth2.RefreshToken, error) {
 	providedToken := r.FormValue("refresh_token")
-	scopes := strings.Split(r.FormValue("scope"), " ")
+	scopes = make([]string, 0)
+	
+	if r.FormValue("scope") != "" {
+		scopes := strings.Split(r.FormValue("scope"), " ")	
+	}
 
 	if providedToken == "" {
 		return nil, nil, oauth2.NewError(oauth2.InvalidRequestErr, "Missing refresh token")
