@@ -32,13 +32,23 @@ func NewOauthServer(config oauth2.ServerConfig, tokenRepository oauth2.TokenRepo
 }
 
 func (server *OauthServer) GetRemoteAddr(r *http.Request) string {
+	var ipAddress string
+
 	if server.Config.IsBehindProxy {
-		if ip := r.Header.Get(server.Config.ProxyIpHeader); ip != "" {
-			return ip
-		}
+		ipAddress = r.Header.Get(server.Config.ProxyIpHeader)
 	}
 
-	return strings.Split(r.RemoteAddr, ":")[0]
+	// Fallback even if isBehindProxy is configured
+	if ipAddress == "" {
+		ipAddress = strings.Split(r.RemoteAddr, ":")[0]
+	}
+
+	// Cloudflare provides us with the edge servers and client ip
+	if strings.Contains(ipAddress, ",") {
+		ipAddress = strings.Split(ipAddress, ",")[0]
+	}
+
+	return ipAddress
 }
 
 func (server *OauthServer) CallbackPreGrant(identifier, ipAddr string) error {
