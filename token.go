@@ -138,4 +138,4 @@ type TokenRepository interface {
 	DeleteExpiredRefreshTokens() error
 }
 
-type TokenMeta map[string]interface{}
+type TokenMeta interface{}

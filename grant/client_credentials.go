@@ -24,7 +24,7 @@ func (grant *clientCredentialsGrant) CreateAuthorizationCode(r *http.Request, cl
 	return nil, oauth2.NewError(oauth2.InvalidRequestErr, "Client credentials grant does not support authorization")
 }
 
-func (grant *clientCredentialsGrant) CreateTokens(r *http.Request, clientId string) (*oauth2.AccessToken, *oauth2.RefreshToken, *oauth2.TokenMeta, error) {
+func (grant *clientCredentialsGrant) CreateTokens(r *http.Request, clientId string) (*oauth2.AccessToken, *oauth2.RefreshToken, oauth2.TokenMeta, error) {
 	scopes := make([]string, 0)
 	if providedScopes := r.FormValue("scope"); providedScopes != "" {
 		scopes = strings.Split(providedScopes, " ")

@@ -25,7 +25,7 @@ func (grant *refreshTokenGrant) CreateAuthorizationCode(r *http.Request, clientI
 	return nil, oauth2.NewError(oauth2.InvalidRequestErr, "Password grant does not support authorization")
 }
 
-func (grant *refreshTokenGrant) CreateTokens(r *http.Request, clientId string) (*oauth2.AccessToken, *oauth2.RefreshToken, *oauth2.TokenMeta, error) {
+func (grant *refreshTokenGrant) CreateTokens(r *http.Request, clientId string) (*oauth2.AccessToken, *oauth2.RefreshToken, oauth2.TokenMeta, error) {
 	providedToken := r.FormValue("refresh_token")
 
 	scopes := make([]string, 0)

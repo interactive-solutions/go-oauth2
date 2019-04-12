@@ -27,7 +27,7 @@ func (grant *passwordGrant) CreateAuthorizationCode(r *http.Request, clientId st
 	return nil, oauth2.NewError(oauth2.InvalidRequestErr, "Password grant does not support authorization")
 }
 
-func (grant *passwordGrant) CreateTokens(r *http.Request, clientId string) (*oauth2.AccessToken, *oauth2.RefreshToken, *oauth2.TokenMeta, error) {
+func (grant *passwordGrant) CreateTokens(r *http.Request, clientId string) (*oauth2.AccessToken, *oauth2.RefreshToken, oauth2.TokenMeta, error) {
 	username := r.FormValue("username")
 	password := r.FormValue("password")
 
