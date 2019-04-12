@@ -11,6 +11,8 @@ type CallbackPostGrant func(identifier, ipAddr, token string)
 type CallbackPrePersistAccessToken func(accessToken *AccessToken) error
 type CallbackPrePersistRefreshToken func(refreshToken *RefreshToken) error
 
+type TokenResponseFunc func(w http.ResponseWriter, accessToken *AccessToken, refreshToken *RefreshToken, useRefreshTokenScopes bool)
+
 type Server interface {
 	// PeriodicallyDeleteExpiredTokens
 	PeriodicallyDeleteExpiredTokens(ctx context.Context, interval time.Duration)

@@ -55,6 +55,8 @@ type ServerConfig struct {
 	CallbackPrePersistAccessToken  CallbackPrePersistAccessToken
 	CallbackPrePersistRefreshToken CallbackPrePersistRefreshToken
 
+	TokenResponseFunc TokenResponseFunc
+
 	// If the server is hiding behind a reverse proxy thus check the headers first
 	IsBehindProxy bool
 	ProxyIpHeader string

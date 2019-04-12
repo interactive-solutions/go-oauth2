@@ -166,6 +166,11 @@ func (server *OauthServer) HandleTokenRequest(w http.ResponseWriter, r *http.Req
 		useRefreshTokenScope = true
 	}
 
+	if server.Config.TokenResponseFunc != nil {
+		server.Config.TokenResponseFunc(w, accessToken, refreshToken, useRefreshTokenScope)
+		return
+	}
+
 	api.WriteTokenResponse(w, accessToken, refreshToken, useRefreshTokenScope)
 }
 
