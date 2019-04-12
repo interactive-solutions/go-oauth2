@@ -77,6 +77,8 @@ type AccessToken struct {
 
 	// Postgres
 	TableName struct{} `sql:"oauth_access_tokens"`
+
+	Meta TokenMeta `sql:"-"`
 }
 
 func NewAccessToken(
@@ -135,3 +137,5 @@ type TokenRepository interface {
 	DeleteExpiredAccessTokens() error
 	DeleteExpiredRefreshTokens() error
 }
+
+type TokenMeta interface{}

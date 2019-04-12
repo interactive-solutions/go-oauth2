@@ -17,7 +17,7 @@ func (grant *authorizationCodeGrant) CreateAuthorizationCode(r *http.Request, cl
 	panic("not implemented")
 }
 
-func (grant *authorizationCodeGrant) CreateTokens(r *http.Request, clientId string) (*oauth2.AccessToken, *oauth2.RefreshToken, error) {
+func (grant *authorizationCodeGrant) CreateTokens(r *http.Request, clientId string) (*oauth2.AccessToken, *oauth2.RefreshToken, *oauth2.TokenMeta, error) {
 	panic("not implemented")
 }
 

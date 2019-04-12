@@ -24,7 +24,7 @@ func (grant *clientCredentialsGrant) CreateAuthorizationCode(r *http.Request, cl
 	return nil, oauth2.NewError(oauth2.InvalidRequestErr, "Client credentials grant does not support authorization")
 }
 
-func (grant *clientCredentialsGrant) CreateTokens(r *http.Request, clientId string) (*oauth2.AccessToken, *oauth2.RefreshToken, error) {
+func (grant *clientCredentialsGrant) CreateTokens(r *http.Request, clientId string) (*oauth2.AccessToken, *oauth2.RefreshToken, *oauth2.TokenMeta, error) {
 	scopes := make([]string, 0)
 	if providedScopes := r.FormValue("scope"); providedScopes != "" {
 		scopes = strings.Split(providedScopes, " ")
@@ -42,10 +42,10 @@ func (grant *clientCredentialsGrant) CreateTokens(r *http.Request, clientId stri
 	}
 
 	if err := grant.TokenRepository.CreateAccessToken(accessToken); err != nil {
-		return nil, nil, oauth2.NewError(oauth2.ServerErrorErr, err.Error())
+		return nil, nil, nil, oauth2.NewError(oauth2.ServerErrorErr, err.Error())
 	}
 
-	return accessToken, nil, nil
+	return accessToken, nil, nil, nil
 }
 
 func (grant *clientCredentialsGrant) AllowPublicClients() bool {

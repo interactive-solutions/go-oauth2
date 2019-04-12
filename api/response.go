@@ -15,6 +15,7 @@ func WriteTokenResponse(
 	accessToken *oauth2.AccessToken,
 	refreshToken *oauth2.RefreshToken,
 	useRefreshTokenScopes bool,
+	meta *oauth2.TokenMeta,
 ) {
 	w.Header().Set("Content-Type", "application/json")
 
@@ -24,17 +25,19 @@ func WriteTokenResponse(
 	}
 
 	payload := struct {
-		AccessToken  string           `json:"access_token"`
-		RefreshToken string           `json:"refresh_token,omitempty"`
-		TokenType    oauth2.TokenType `json:"token_type"`
-		ExpiresIn    float64          `json:"expires_in"`
-		Scopes       string           `json:"scope"`
-		OwnerId      interface{}      `json:"owner_id,omitempty"`
+		AccessToken  string            `json:"access_token"`
+		RefreshToken string            `json:"refresh_token,omitempty"`
+		TokenType    oauth2.TokenType  `json:"token_type"`
+		ExpiresIn    float64           `json:"expires_in"`
+		Scopes       string            `json:"scope"`
+		OwnerId      interface{}       `json:"ownerId"`
+		Meta         *oauth2.TokenMeta `json:"meta,omitempty"`
 	}{
 		AccessToken: accessToken.Token,
 		TokenType:   oauth2.TokenTypeBearer,
 		ExpiresIn:   math.Floor(accessToken.GetExpiresIn()),
 		Scopes:      strings.Join(scopes, " "),
+		Meta:        meta,
 	}
 
 	if accessToken.OwnerId != "" {

@@ -155,7 +155,7 @@ func (server *OauthServer) HandleTokenRequest(w http.ResponseWriter, r *http.Req
 		return
 	}
 
-	accessToken, refreshToken, err := oauthGrant.CreateTokens(r, clientId)
+	accessToken, refreshToken, meta, err := oauthGrant.CreateTokens(r, clientId)
 	if err != nil {
 		server.writeError(w, err)
 		return
@@ -166,12 +166,7 @@ func (server *OauthServer) HandleTokenRequest(w http.ResponseWriter, r *http.Req
 		useRefreshTokenScope = true
 	}
 
-	if server.Config.TokenResponseFunc != nil {
-		server.Config.TokenResponseFunc(w, accessToken, refreshToken, useRefreshTokenScope)
-		return
-	}
-
-	api.WriteTokenResponse(w, accessToken, refreshToken, useRefreshTokenScope)
+	api.WriteTokenResponse(w, accessToken, refreshToken, useRefreshTokenScope, meta)
 }
 
 // Get grant by name
