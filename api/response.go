@@ -25,13 +25,13 @@ func WriteTokenResponse(
 	}
 
 	payload := struct {
-		AccessToken  string            `json:"access_token"`
-		RefreshToken string            `json:"refresh_token,omitempty"`
-		TokenType    oauth2.TokenType  `json:"token_type"`
-		ExpiresIn    float64           `json:"expires_in"`
-		Scopes       string            `json:"scope"`
-		OwnerId      interface{}       `json:"ownerId"`
-		Meta         *oauth2.TokenMeta `json:"meta,omitempty"`
+		AccessToken  string           `json:"access_token"`
+		RefreshToken string           `json:"refresh_token,omitempty"`
+		TokenType    oauth2.TokenType `json:"token_type"`
+		ExpiresIn    float64          `json:"expires_in"`
+		Scopes       string           `json:"scope"`
+		OwnerId      interface{}      `json:"ownerId"`
+		Meta         oauth2.TokenMeta `json:"meta,omitempty"`
 	}{
 		AccessToken: accessToken.Token,
 		TokenType:   oauth2.TokenTypeBearer,
