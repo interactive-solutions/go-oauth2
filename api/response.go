@@ -30,7 +30,7 @@ func WriteTokenResponse(
 		TokenType    oauth2.TokenType `json:"token_type"`
 		ExpiresIn    float64          `json:"expires_in"`
 		Scopes       string           `json:"scope"`
-		OwnerId      interface{}      `json:"ownerId"`
+		OwnerId      interface{}      `json:"owner_id"`
 		Meta         oauth2.TokenMeta `json:"meta,omitempty"`
 	}{
 		AccessToken: accessToken.Token,
